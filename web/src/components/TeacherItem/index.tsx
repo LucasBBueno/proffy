@@ -1,42 +1,65 @@
-import React from 'react';
+import React, { useCallback } from 'react';
+
+import api from '../../services/api';
 
 import whatsappIcon from'../../assets/images/icons/whatsapp.svg';
 
 import './styles.css';
 
-const TeacherItem: React.FC = () => {
+export interface Teacher {
+    avatar: string;
+    bio: string;
+    cost: number;
+    id: number;
+    name: string;
+    subject: string;
+    whatsapp: string;
+}
+
+interface TeacherItemProps {
+    teacher: Teacher;
+}
+
+const TeacherItem: React.FC<TeacherItemProps> = ({ teacher }) => {
+    const createNewConnection = useCallback(() => {
+        api.post('/connections', {
+            user_id: teacher.id
+        });
+
+    }, [teacher.id])
 
     return (
         <article className="teacher-item">
             <header>
                 <img 
-                src="https://avatars0.githubusercontent.com/u/45021630?s=460&u=25d45893c9bdbb8680f7271fec8cf32c2f26a20c&v=4"
-                alt="Lucas Bueno"
+                src={teacher.avatar}
+                alt={teacher.name}
                 />
                 <div>
-                    <strong>Lucas Bueno</strong>
-                    <span>Mobile</span>
+                    <strong>{teacher.name}</strong>
+                    <span>{teacher.subject}</span>
                 </div>
             </header>
 
             <p>
-                Entusiasta das melhores tecnologias de desenvolvimento Mobile
-
-                <br /> <br />
-                Apaixonado por desenvolver aplicações mobile voltada a experiência do usuário e acessibilidade.
+                {teacher.bio}
             </p>
 
             <footer>
                 <p>
                     Preço/hora
                     <strong>
-                        R$ 80,00
+                        R$ {teacher.cost}
                     </strong>
                 </p>
-                <button type="button">
+                <a 
+                    target="_blank"
+                    onClick={createNewConnection} 
+                    href={`https://wa.me/${teacher.whatsapp}`}
+                >
                     <img src={whatsappIcon} alt="Whatsapp" />
                     Entrar em contato
-                </button>
+                </a>
             </footer>
         </article>
     );
