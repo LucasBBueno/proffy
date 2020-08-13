@@ -1,19 +1,52 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TextInput, KeyboardAvoidingView } from 'react-native';
 import { BorderlessButton, RectButton } from 'react-native-gesture-handler';
 import { Feather } from '@expo/vector-icons';
+import  AsyncStorage from '@react-native-community/async-storage';
 
 import PageHeader from '../../components/PageHeader';
 
+import TeacherItem, { Teacher } from '../../components/TeacherItem';
+import api from '../../services/api';
+
 import styles from './styles';
-import TeacherItem from '../../components/TeacherItem';
 
 const TeacherList: React.FC = () => {
+    const [teachers, setTeachers] = useState([]);
+    const [favorites, setFavorites] = useState<number>([]);    
     const [isFiltersVisible, setIsFiltersVisible] = useState(false);
+
+    const [subject, setSubject] = useState('');
+    const [week_day, setWeekDay] = useState('');
+    const [time, setTime] = useState('');
+
+    useEffect(() => {
+        AsyncStorage.getItem('favorites').then(response => {
+            if(response){
+                const favoritedTeachers = JSON.parse(response);
+                const favoritedTeachersIds = favoritedTeachers.map((teacher: Teacher) => teacher.id)
+
+                setFavorites(favoritedTeachersIds);
+            }
+        })
+    }, []);
 
     function handleToggleFiltersVisible() {
         setIsFiltersVisible(!isFiltersVisible);
-    }
+    };
+
+    async function handleFiltersSubmit() {
+        const response = await api.get('classes', {
+            params: {
+                subject,
+                week_day,
+                time
+            }
+        });
+
+        setIsFiltersVisible(false);
+        setTeachers(response.data);
+    };
 
     return (
         <View style={styles.container}>
@@ -34,6 +67,8 @@ const TeacherList: React.FC = () => {
                             style={styles.input} 
                             placeholder="Qual é a matéria?"
                             placeholderTextColor="#c1bccc"
+                            value={subject}
+                            onChangeText={text => setSubject(text)}
                         />
 
                         <View style={styles.inputGroup}>
@@ -46,6 +81,8 @@ const TeacherList: React.FC = () => {
                                     style={styles.input} 
                                     placeholder="Qual o dia?"
                                     placeholderTextColor="#c1bccc"
+                                    value={week_day}
+                                    onChangeText={text => setWeekDay(text)}
                                 />
                             </View>
 
@@ -58,11 +95,13 @@ const TeacherList: React.FC = () => {
                                     style={styles.input} 
                                     placeholder="Qual horário?"
                                     placeholderTextColor="#c1bccc"
+                                    value={time}
+                                    onChangeText={text => setTime(text)}
                                 />
                             </View>
                         </View>
 
-                        <RectButton style={styles.submitButton}>
+                        <RectButton onPress={handleFiltersSubmit} style={styles.submitButton}>
                             <Text style={styles.submitButtonText}>
                                 Filtrar
                             </Text>
@@ -79,11 +118,14 @@ const TeacherList: React.FC = () => {
                     paddingBottom: 16
                 }}
             >
-                <TeacherItem />
-                <TeacherItem />
-                <TeacherItem />
-                <TeacherItem />
-                <TeacherItem />
+                {teachers.map((teacher: Teacher) => (
+                    <TeacherItem 
+                        key={teacher.id} 
+                        teacher={teacher} 
+                        favorited={favorites.includes(teacher.id)}
+                    /> 
+                ))}
+                
             </ScrollView>
         </View>
     );

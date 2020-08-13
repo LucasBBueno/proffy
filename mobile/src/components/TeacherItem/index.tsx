@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Image, Text } from 'react-native';
+import React, { useState } from 'react';
+import { View, Image, Text, Linking } from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
 
 import heartOutlineIcon from '../../assets/images/icons/heart-outline.png';
 import unfavoriteIcon from '../../assets/images/icons/unfavorite.png';
@@ -8,47 +9,94 @@ import whastappIcon from '../../assets/images/icons/whatsapp.png';
 import styles from './styles';
 import { RectButton } from 'react-native-gesture-handler';
 
-const TeacherItem: React.FC = () => {
+export interface Teacher {
+    id: number;
+    avatar: string;
+    bio: string;
+    cost: string;
+    name: string;
+    subject: string;
+    whatsappp: string;
+}
+
+interface TeacherItemProps {
+    teacher: Teacher;
+    favorited: boolean;
+}
+
+const TeacherItem: React.FC<TeacherItemProps> = ({ teacher, favorited }) => {
+    const [isFavorited, setIsFavorited] = useState(favorited);
+
+    function handleLinkToWhatsapp() {
+        Linking.openURL(`whatsapp://send?phone=${teacher.whatsappp}`);
+    }
+
+    async function handleToggleFavorite() {
+        const favorites = await AsyncStorage.getItem('favorites');
+            
+        let favoritesArray = [];
+
+        if(favorites) {
+            const favoritesArray = JSON.parse(favorites);
+        }
+
+        if(isFavorited){
+            
+
+        }else {
+            favoritesArray.push(teacher);
+
+            setIsFavorited(true);
+            await AsyncStorage.setItem('favorites', JSON.stringify(favoritesArray));
+        }
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.profile}>
                 <Image 
                     style={styles.avatar}
-                    source={{ uri: 'https://avatars0.githubusercontent.com/u/45021630?s=460&u=25d45893c9bdbb8680f7271fec8cf32c2f26a20c&v=4' }}
+                    source={{ uri: teacher.avatar }}
                 />
 
                 <View style={styles.profileInfo}>
                     <Text style={styles.name}>
-                        Lucas Bueno
+                        {teacher.name}
                     </Text>
                     <Text style={styles.subject}>
-                        Matemática
+                        {teacher.subject}
                     </Text>
                 </View>
             </View>
 
             
             <Text style={styles.bio}>
-                    Entusista das melhores tecnologias de desenvolvimento mobile.
-                    {'\n'}{'\n'}
-                    Apaixonado por construir aplicações que irão mudar a vida das pessoas.
+                {teacher.bio}
             </Text>
 
             <View style={styles.footer}>
                 <Text style={styles.price}>
                     Preço/hora {'   '}
                     <Text style={styles.priceValue}>
-                        R$ 20,00
+                        R$ {teacher.cost}
                     </Text>
                 </Text>
 
                 <View style={styles.buttonsContainer}>
-                    <RectButton style={[styles.favoriteButton, styles.favorited]}>
-                        {/* <Image source={heartOutlineIcon} /> */} 
-                        <Image source={unfavoriteIcon} />
+                    <RectButton
+                        onPress={handleToggleFavorite}
+                        style={[
+                            styles.favoriteButton, 
+                            isFavorited ? styles.favorited : {} 
+                        ]}
+                    >
+                        {isFavorited 
+                            ? <Image source={unfavoriteIcon} /> 
+                            : <Image source={heartOutlineIcon} /> 
+                        }
                     </RectButton>
 
-                    <RectButton style={styles.contactButton}>
+                    <RectButton onPress={handleLinkToWhatsapp} style={styles.contactButton}>
                         <Image source={whastappIcon} />
                         <Text style={styles.contactButtonText}>
                             Entrar em contato
