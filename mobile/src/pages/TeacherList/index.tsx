@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, TextInput, KeyboardAvoidingView } from 'react-native';
 import { BorderlessButton, RectButton } from 'react-native-gesture-handler';
 import { Feather } from '@expo/vector-icons';
 import  AsyncStorage from '@react-native-community/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 
 import PageHeader from '../../components/PageHeader';
 
@@ -13,14 +14,14 @@ import styles from './styles';
 
 const TeacherList: React.FC = () => {
     const [teachers, setTeachers] = useState([]);
-    const [favorites, setFavorites] = useState<number>([]);    
+    const [favorites, setFavorites] = useState<number[]>([]);    
     const [isFiltersVisible, setIsFiltersVisible] = useState(false);
 
     const [subject, setSubject] = useState('');
     const [week_day, setWeekDay] = useState('');
     const [time, setTime] = useState('');
 
-    useEffect(() => {
+    function loadFavorites() {
         AsyncStorage.getItem('favorites').then(response => {
             if(response){
                 const favoritedTeachers = JSON.parse(response);
@@ -28,8 +29,14 @@ const TeacherList: React.FC = () => {
 
                 setFavorites(favoritedTeachersIds);
             }
-        })
-    }, []);
+        });
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            loadFavorites();
+        }, [])
+    )
 
     function handleToggleFiltersVisible() {
         setIsFiltersVisible(!isFiltersVisible);
@@ -43,6 +50,8 @@ const TeacherList: React.FC = () => {
                 time
             }
         });
+
+        loadFavorites();
 
         setIsFiltersVisible(false);
         setTeachers(response.data);
